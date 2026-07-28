@@ -1,0 +1,30 @@
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('http://156.67.27.148:3010/');
+  await page.getByRole('textbox', { name: 'Email Address' }).click();
+  await page.getByRole('textbox', { name: 'Email Address' }).fill('ra');
+  await page.getByRole('textbox', { name: 'Email Address' }).click();
+  await page.getByRole('textbox', { name: 'Email Address' }).fill('rathnasri@gmail.com');
+  await page.getByRole('textbox', { name: 'Email Address' }).press('Tab');
+  await page.getByRole('textbox', { name: 'Password' }).fill('Password@123');
+  await page.getByRole('button', { name: 'Sign In' }).click();
+  await page.getByRole('button', { name: 'right' }).click();
+  await page.getByRole('menuitem', { name: 'Volunteer' }).click();
+  await page.getByRole('menuitem', { name: 'Volunteer' }).click();
+  await page.getByRole('menuitem', { name: 'Transactions' }).click();
+  await page.getByRole('menuitem', { name: 'Transactions' }).click();
+  await page.getByRole('menuitem', { name: 'Configuration' }).click();
+  await page.getByRole('link', { name: 'News And Updates' }).click();
+  await page.getByRole('button', { name: 'Add News' }).click();
+  await page.getByRole('textbox', { name: 'Title *' }).click();
+  await page.getByRole('textbox', { name: 'Title *' }).fill('Test');
+  await page.getByRole('textbox', { name: 'Description *' }).click();
+  await page.getByRole('textbox', { name: 'Description *' }).fill('');
+  await page.getByRole('textbox', { name: 'Title *' }).click();
+  await page.getByRole('textbox', { name: 'Title *' }).fill('Coming soon article');
+  await page.getByRole('textbox', { name: 'Title *' }).press('Tab');
+  await page.getByRole('textbox', { name: 'Description *' }).click();
+  await page.getByRole('textbox', { name: 'Description *' }).fill('New article is coming soon');
+  await page.getByRole('textbox', { name: 'Date', exact: true }).fill('2026-07-13');
+});
