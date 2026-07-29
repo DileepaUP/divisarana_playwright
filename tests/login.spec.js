@@ -1,12 +1,46 @@
 import 'dotenv/config';
 import { test, expect } from '@playwright/test';
+import path from 'path';
+import fs from 'fs';
 
-test('user should log in with valid credentials', async ({ page }) => {
+const credentialsLogPath = path.join(__dirname, 'fixtures', 'signup-credentials-log.csv');
+
+function getLatestSignupCredentials() {
+  if (!fs.existsSync(credentialsLogPath)) {
+    throw new Error(
+      `Credentials log not found at ${credentialsLogPath}. ` +
+      `Run the sign-up test at least once first so this file is created.`
+    );
+  }
+
+  const content = fs.readFileSync(credentialsLogPath, 'utf8').trim();
+  const lines = content.split('\n');
+
+  if (lines.length < 2) {
+    throw new Error(
+      `Credentials log at ${credentialsLogPath} has no saved runs yet. ` +
+      `Run the sign-up test at least once first.`
+    );
+  }
+
+  const lastLine = lines[lines.length - 1];
+  const [, username, email, password] = lastLine.split(',');
+
+  if (!email || !password) {
+    throw new Error(`Could not parse credentials from last log line: "${lastLine}"`);
+  }
+
+  return { username, email, password };
+}
+
+test('user should log in with the most recently signed-up credentials', async ({ page }) => {
+  const { username, email, password } = getLatestSignupCredentials();
+  console.log(`Using latest signup credentials — username: ${username}, email: ${email}`);
+
   await page.goto('http://156.67.27.148:3011/', {
     waitUntil: 'domcontentloaded',
   });
 
-  // Open the login page.
   await page.getByRole('link', { name: 'Sign In' }).click();
 
   await expect(page).toHaveURL(/\/login\/?$/);
@@ -23,19 +57,18 @@ test('user should log in with valid credentials', async ({ page }) => {
     name: 'Sign In',
   });
 
-  // Confirm that the login form is available.
   await expect(emailField).toBeVisible();
   await expect(passwordField).toBeVisible();
   await expect(signInButton).toBeEnabled();
 
-  // Enter test credentials.
-  await emailField.fill(process.env.TEST_USER_EMAIL);
-  await passwordField.fill(process.env.TEST_USER_PASSWORD);
+  await emailField.fill(email);
+  await expect(emailField).toHaveValue(email);
 
-  // Submit login.
+  await passwordField.fill(password);
+  await expect(passwordField).toHaveValue(password);
+
   await signInButton.click();
 
-  // Expected result: user should leave the login page.
   await expect(page).not.toHaveURL(/\/login\/?$/, {
     timeout: 15_000,
   });
