@@ -10,6 +10,7 @@ node_modules/
 tests/fixtures/signup-credentials-log.csv
 tests/fixtures/donee-profile-log.csv
 tests/fixtures/coordinator-profile-log.csv
+tests/fixtures/volunteer-profile-log.csv
 
 # Gmail API credentials (verifying coordinator-creation emails)
 client_secret_*.json

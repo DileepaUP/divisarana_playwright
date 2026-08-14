@@ -54,15 +54,30 @@ function extractAccountCredentials(body) {
 }
 
 /**
- * Polls the inbox until an email addressed to `recipientEmail` is found
- * (searched via Gmail's `to:` operator), or the timeout is reached.
- * Returns the matching message's subject/body/credentials, or null if none arrived.
+ * Pulls the 6-digit code out of the Divisarana OTP email. The code sits
+ * alone inside a heavily-styled div (letter-spacing box), so match that
+ * specific spot first before falling back to any standalone 6-digit run —
+ * the surrounding template text contains other numbers (phone, address, year).
  */
-async function waitForEmailTo(recipientEmail, { timeoutMs = 60_000, pollIntervalMs = 5_000, afterEpochSeconds } = {}) {
+function extractOtpCode(body) {
+  const styledMatch = body.match(/letter-spacing:\s*8px[^>]*>\s*(\d{6})\s*</i);
+  if (styledMatch) return styledMatch[1];
+  const clean = body.replace(/<[^>]+>/g, ' ');
+  const fallbackMatch = clean.match(/\b(\d{6})\b/);
+  return fallbackMatch ? fallbackMatch[1] : null;
+}
+
+/**
+ * Polls the inbox until an email addressed to `recipientEmail` is found
+ * (searched via Gmail's `to:` operator, optionally narrowed by subject),
+ * or the timeout is reached. Returns the matching message's subject/body/
+ * credentials/OTP code, or null if none arrived.
+ */
+async function waitForEmailTo(recipientEmail, { timeoutMs = 60_000, pollIntervalMs = 5_000, afterEpochSeconds, subjectContains } = {}) {
   const gmail = getGmailClient();
-  const query = afterEpochSeconds
-    ? `to:${recipientEmail} after:${afterEpochSeconds}`
-    : `to:${recipientEmail}`;
+  let query = `to:${recipientEmail}`;
+  if (afterEpochSeconds) query += ` after:${afterEpochSeconds}`;
+  if (subjectContains) query += ` subject:"${subjectContains}"`;
 
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
@@ -82,6 +97,7 @@ async function waitForEmailTo(recipientEmail, { timeoutMs = 60_000, pollInterval
         from: headers.From,
         to: headers.To,
         snippet: message.data.snippet,
+        otpCode: extractOtpCode(body),
         ...extractAccountCredentials(body),
       };
     }
